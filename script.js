@@ -321,11 +321,12 @@ function renderQuiz() {
 
     console.log(`總欄數: ${totalColumns}, 每行最多: ${maxColumnsPerRow} 欄`);
 
-    // 智能分配：盡量填滿上半部
+    // 智能分配：盡量填滿上半部，但最多11個詞彙
     let topColumns = 0;
     let splitIndex = 0;
+    const maxItemsInTopSection = 11; // 上半部最多11個詞彙
 
-    for (let i = 0; i < vocabList.length; i++) {
+    for (let i = 0; i < vocabList.length && i < maxItemsInTopSection; i++) {
         if (topColumns + columnCounts[i] <= maxColumnsPerRow) {
             topColumns += columnCounts[i];
             splitIndex = i + 1;
@@ -336,7 +337,7 @@ function renderQuiz() {
 
     // 如果沒有詞彙能放進上半部（計算錯誤），使用預設分割
     if (splitIndex === 0) {
-        splitIndex = Math.ceil(vocabList.length / 2);
+        splitIndex = Math.min(Math.ceil(vocabList.length / 2), maxItemsInTopSection);
     }
 
     // 如果所有詞彙都能放進上半部，全部放上面，下面留空
