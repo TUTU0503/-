@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圈詞練習單產生器</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 主容器 -->
+    <div class="app-container">
+        <!-- 左側：練習單預覽區 -->
+        <div class="preview-area" id="previewArea">
+            <div class="worksheet-paper">
+                <!-- 標題和資訊欄合併（同一行） -->
+                <div class="worksheet-header-compact">
+                    <div class="title-text" id="worksheetTitle" contenteditable="true">國語圈詞練習單</div>
+                    <div class="info-bar-inline">
+                        <div class="info-item">班級：__________</div>
+                        <div class="info-item">姓名：__________</div>
+                        <div class="info-item">得分：__________</div>
+                    </div>
+                </div>
+
+                <!-- 練習單內容區（上下兩部分） -->
+                <div class="quiz-content-wrapper">
+                    <!-- 上半部 -->
+                    <div class="quiz-section quiz-section-top" id="quizContentTop">
+                        <!-- 上半部詞彙 -->
+                    </div>
+                    <!-- 分隔線 -->
+                    <div class="section-divider"></div>
+                    <!-- 下半部 -->
+                    <div class="quiz-section quiz-section-bottom" id="quizContentBottom">
+                        <!-- 下半部詞彙 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側：控制面板 -->
+        <div class="control-panel">
+            <div class="panel-header">
+                <h2>📝 控制面板</h2>
+            </div>
+
+            <!-- 標題設定 -->
+            <div class="control-section">
+                <label class="control-label">練習單標題</label>
+                <input type="text" id="titleInput" class="control-input" value="圈詞練習單" placeholder="輸入標題">
+            </div>
+
+            <!-- 詞彙輸入 -->
+            <div class="control-section">
+                <label class="control-label">
+                    詞彙輸入
+                    <span class="hint">（格式：國字,拼音 或 國字,注音）</span>
+                </label>
+                <textarea id="vocabInput" class="control-textarea" rows="8" placeholder="範例：&#10;蘋果,ping2guo3&#10;香蕉,xiang1jiao1&#10;或&#10;蘋果,ㄆㄧㄥˊㄍㄨㄛˇ&#10;香蕉,ㄒㄧㄤㄐㄧㄠ&#10;&#10;每行一個詞，用逗號分隔國字和拼音/注音"></textarea>
+                <button id="addWordsBtn" class="btn btn-primary">➕ 新增詞彙</button>
+            </div>
+
+            <!-- 已加入的詞彙列表 -->
+            <div class="control-section">
+                <div class="section-header">
+                    <label class="control-label">已加入的詞彙</label>
+                    <button id="clearAllBtn" class="btn btn-danger-sm">清除全部</button>
+                </div>
+                <div id="wordList" class="word-list">
+                    <!-- 詞彙列表會動態插入這裡 -->
+                </div>
+            </div>
+
+            <!-- 顯示設定 -->
+            <div class="control-section">
+                <label class="control-label">格子大小</label>
+                <input type="range" id="cellSizeSlider" min="30" max="70" value="45" class="slider">
+                <span id="cellSizeValue">45px</span>
+            </div>
+
+            <div class="control-section">
+                <label class="control-label">快速挖空</label>
+                <div class="button-group-small">
+                    <button id="blankAllZhuyin" class="btn btn-secondary-sm">挖空所有注音</button>
+                    <button id="blankAllWord" class="btn btn-secondary-sm">挖空所有國字</button>
+                    <button id="showAll" class="btn btn-secondary-sm">全部顯示</button>
+                </div>
+            </div>
+
+            <!-- 操作說明 -->
+            <div class="control-section help-section">
+                <div class="help-title">💡 操作說明</div>
+                <ul class="help-list">
+                    <li>🖱️ <strong>右鍵點擊</strong>字或注音可切換挖空</li>
+                    <li>✏️ <strong>雙擊</strong>注音可直接編輯</li>
+                    <li>📋 可直接點擊標題編輯</li>
+                    <li>🖨️ 使用瀏覽器列印功能（Ctrl+P）列印</li>
+                </ul>
+            </div>
+
+            <!-- 列印按鈕 -->
+            <button id="printBtn" class="btn btn-success-lg">🖨️ 列印練習單</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
