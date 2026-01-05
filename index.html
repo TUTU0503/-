@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>消防員超勤時數計算系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen py-8">
+    <div class="container mx-auto px-4 max-w-4xl">
+        <!-- 標題區 -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 text-center mb-2">消防員超勤時數計算系統</h1>
+            <p class="text-gray-600 text-center">Firefighter Overtime Calculator</p>
+        </div>
+
+        <!-- 主要表單區 -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <form id="overtimeForm" class="space-y-6">
+                <!-- 查詢月份 -->
+                <div class="form-group">
+                    <label for="queryMonth" class="block text-sm font-semibold text-gray-700 mb-2">
+                        查詢月份 <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="month"
+                        id="queryMonth"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                        required
+                    >
+                </div>
+
+                <!-- 當月基本工時顯示 -->
+                <div id="baseHoursDisplay" class="hidden">
+                    <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-sm font-semibold text-purple-800 mb-1">本月基本工時</h3>
+                                <p id="baseHoursDetail" class="text-xs text-purple-700"></p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-3xl font-bold text-purple-600" id="baseHoursValue">0</div>
+                                <div class="text-xs text-purple-500">小時</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 基本工時自動計算提示 -->
+                <div class="bg-indigo-50 border-2 border-indigo-200 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-indigo-600 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                        <div>
+                            <h3 class="text-sm font-semibold text-indigo-800 mb-1">基本工時自動計算</h3>
+                            <p class="text-xs text-indigo-700">系統將根據查詢月份自動計算基本工時</p>
+                            <p class="text-xs text-indigo-600 mt-1">計算公式：該月上班天數 × 8小時</p>
+                            <p class="text-xs text-indigo-500 mt-1">上班天數依據2026年人事行政局行事曆</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 班別選擇 -->
+                <div class="form-group">
+                    <label for="shift" class="block text-sm font-semibold text-gray-700 mb-2">
+                        班別 <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                        id="shift"
+                        name="shift"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition bg-white"
+                        required
+                    >
+                        <option value="">請選擇班別</option>
+                        <option value="甲班">甲班（2026/01/02 起）</option>
+                        <option value="乙班">乙班（2026/01/01 起）</option>
+                    </select>
+                </div>
+
+                <!-- 該班該月應上班天數顯示 -->
+                <div id="shiftWorkDaysDisplay" class="hidden">
+                    <div class="bg-gradient-to-r from-green-50 to-teal-50 border-2 border-green-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-sm font-semibold text-green-800 mb-1">該班該月應上班天數</h3>
+                                <p id="shiftWorkDaysDetail" class="text-xs text-green-700"></p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-3xl font-bold text-green-600" id="shiftWorkDaysValue">0</div>
+                                <div class="text-xs text-green-500">天</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 勤務時間 -->
+                <div class="form-group">
+                    <label for="dutyHours" class="block text-sm font-semibold text-gray-700 mb-2">
+                        勤務時間 <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                        id="dutyHours"
+                        name="dutyHours"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition bg-white"
+                        required
+                    >
+                        <option value="">請選擇勤務時間</option>
+                        <option value="18">18 小時</option>
+                        <option value="20">20 小時</option>
+                    </select>
+                </div>
+
+                <!-- 請假類型 -->
+                <div class="form-group">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">
+                        請假類型（可多選）
+                    </label>
+                    <div class="space-y-2">
+                        <label class="flex items-center p-3 border-2 border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                            <input type="checkbox" name="leaveType" value="輪休" class="w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500">
+                            <span class="ml-3 text-gray-700 font-medium">輪休</span>
+                        </label>
+                        <label class="flex items-center p-3 border-2 border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                            <input type="checkbox" name="leaveType" value="休假" class="w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500">
+                            <span class="ml-3 text-gray-700 font-medium">休假</span>
+                        </label>
+                        <label class="flex items-center p-3 border-2 border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                            <input type="checkbox" name="leaveType" value="補休" class="w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500">
+                            <span class="ml-3 text-gray-700 font-medium">補休</span>
+                        </label>
+                    </div>
+                    <div id="leaveDaysInput" class="mt-3 hidden">
+                        <label for="leaveDays" class="block text-xs text-gray-600 mb-1">請假天數</label>
+                        <input
+                            type="number"
+                            id="leaveDays"
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                            placeholder="請輸入請假天數"
+                            min="0"
+                            step="1"
+                        >
+                    </div>
+                </div>
+
+                <!-- 計算按鈕 -->
+                <div class="pt-4">
+                    <button
+                        type="submit"
+                        class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold py-4 px-6 rounded-lg hover:from-indigo-600 hover:to-purple-700 transition transform hover:scale-105 shadow-lg"
+                    >
+                        計算超勤時數
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 結果顯示區 -->
+        <div id="resultSection" class="bg-white rounded-2xl shadow-xl p-8 mt-6 hidden">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-3">計算結果</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 上班天數 -->
+                <div class="result-card">
+                    <div class="text-sm text-gray-600 mb-1">上班天數</div>
+                    <div class="text-3xl font-bold text-indigo-600" id="workDaysResult">0</div>
+                    <div class="text-xs text-gray-500 mt-1">天</div>
+                </div>
+
+                <!-- 總工作時數 -->
+                <div class="result-card">
+                    <div class="text-sm text-gray-600 mb-1">總工作時數</div>
+                    <div class="text-3xl font-bold text-indigo-600" id="totalHoursResult">0</div>
+                    <div class="text-xs text-gray-500 mt-1">小時</div>
+                </div>
+
+                <!-- 超勤時數 -->
+                <div class="result-card bg-gradient-to-br from-indigo-50 to-purple-50">
+                    <div class="text-sm text-gray-600 mb-1">超勤時數</div>
+                    <div class="text-3xl font-bold text-purple-600" id="overtimeResult">0</div>
+                    <div class="text-xs text-gray-500 mt-1">小時</div>
+                </div>
+
+                <!-- 請假天數 -->
+                <div class="result-card">
+                    <div class="text-sm text-gray-600 mb-1">請假天數</div>
+                    <div class="text-3xl font-bold text-indigo-600" id="leaveDaysResult">0</div>
+                    <div class="text-xs text-gray-500 mt-1">天</div>
+                </div>
+            </div>
+
+            <!-- 詳細資訊 -->
+            <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                <h3 class="font-semibold text-gray-700 mb-2">計算說明</h3>
+                <div id="calculationDetails" class="text-sm text-gray-600 space-y-1"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
