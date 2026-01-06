@@ -37,6 +37,37 @@ const SHIFT_WORKDAYS_2026 = {
     }
 };
 
+// 各號碼對應的時薪
+const HOURLY_RATE = {
+    '1號': 324,
+    '2號': 328,
+    '3號': 298,
+    '4號': 328,
+    '5號': 298,
+    '6號': 182,
+    '7號': 217,
+    '8號': 244,
+    '9號': 249,
+    '10號': 278,
+    '11號': 269,
+    '12號': 249,
+    '13號': 282,
+    '14號': 205,
+    '15號': 268,
+    '16號': 203,
+    '17號': 259,
+    '18號': 182,
+    '19號': 249,
+    '20號': 208,
+    '21號': 308,
+    '22號': 254,
+    '23號': 250,
+    '24號': 249,
+    '25號': 308,
+    '26號': 308,
+    '27號': 221
+};
+
 // DOM 元素
 const form = document.getElementById('overtimeForm');
 const resultSection = document.getElementById('resultSection');
@@ -208,6 +239,7 @@ function calculateWorkDays(startDate, endDate, shift) {
  */
 function calculateOvertime() {
     // 取得表單數據
+    const name = document.getElementById('name').value;
     const shift = document.getElementById('shift').value;
     const queryMonth = document.getElementById('queryMonth').value;
     const dutyHours = parseInt(document.getElementById('dutyHours').value);
@@ -219,7 +251,7 @@ function calculateOvertime() {
     const overnightDays = parseInt(document.getElementById('overnightDays').value) || 0;
 
     // 驗證必填欄位
-    if (!shift || !dutyHours || !queryMonth) {
+    if (!name || !shift || !dutyHours || !queryMonth) {
         alert('請填寫所有必填欄位！');
         return;
     }
@@ -255,14 +287,36 @@ function calculateOvertime() {
         - baseHours
     );
 
+    // 取得該號碼的時薪
+    const hourlyRate = HOURLY_RATE[name] || 0;
+
+    // 計算原始超勤費用
+    const totalOvertimePay = overtimeHours * hourlyRate;
+
+    // 超勤費用上限為19000元
+    const overtimePayLimit = 19000;
+    const overtimePay = Math.min(totalOvertimePay, overtimePayLimit);
+
+    // 計算剩餘時數（如果超過上限）
+    let remainingHours = 0;
+    if (totalOvertimePay > overtimePayLimit && hourlyRate > 0) {
+        // 已支付時數 = 19000 / 時薪，無條件進位
+        const paidHours = Math.ceil(overtimePayLimit / hourlyRate);
+        remainingHours = Math.max(0, overtimeHours - paidHours);
+    }
+
     // 計算總工作時數（用於顯示）
     const totalHours = actualWorkDays * dutyHours;
 
     // 顯示結果
     displayResults({
+        name: name,
         workDays: actualWorkDays,
         totalHours: totalHours,
         overtimeHours: overtimeHours,
+        hourlyRate: hourlyRate,
+        overtimePay: overtimePay,
+        remainingHours: remainingHours,
         leaveDays: totalLeaveDays,
         rotationDays: rotationDays,
         vacationDays: vacationDays,
@@ -284,10 +338,10 @@ function calculateOvertime() {
  */
 function displayResults(data) {
     // 更新結果數字
-    animateNumber('workDaysResult', data.workDays);
-    animateNumber('totalHoursResult', data.totalHours);
     animateNumber('overtimeResult', data.overtimeHours);
-    animateNumber('leaveDaysResult', data.leaveDays);
+    animateNumber('hourlyRateResult', data.hourlyRate);
+    animateNumber('overtimePayResult', Math.round(data.overtimePay));
+    animateNumber('remainingHoursResult', Math.round(data.remainingHours * 10) / 10);
     animateNumber('monthlyOvertimeResult', data.overtimeHours);
 
     // 更新計算說明
@@ -318,6 +372,7 @@ function displayResults(data) {
     `;
 
     details.innerHTML = `
+        <p><strong>號碼：</strong>${data.name}</p>
         <p><strong>查詢期間：</strong>${dateRange}</p>
         <p><strong>班別：</strong>${data.shift}</p>
         <p><strong>勤務時間：</strong>每班 ${data.dutyHours} 小時</p>
