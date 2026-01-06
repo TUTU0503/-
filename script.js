@@ -1,9 +1,9 @@
 // 消防員超勤時數計算系統
 
-// 班別起始日期
+// 班別起始日期（使用 new Date(year, month-1, day) 避免時區問題）
 const SHIFT_START_DATES = {
-    '甲班': new Date('2026-01-02'),
-    '乙班': new Date('2026-01-01')
+    '甲班': new Date(2026, 0, 2),  // 2026/01/02
+    '乙班': new Date(2026, 0, 1)   // 2026/01/01
 };
 
 // 2026年各月份上班天數（依據人事行政局行事曆）
@@ -22,24 +22,24 @@ const WORKDAYS_PER_MONTH_2026 = {
     12: 22  // 12月：22天
 };
 
+// 各班別2026年每月應上班天數（隔日勤務制）
+// 甲班起始日：2026/01/02，乙班起始日：2026/01/01
+const SHIFT_WORKDAYS_2026 = {
+    '甲班': {
+        1: 15, 2: 14, 3: 16, 4: 15, 5: 15, 6: 15,
+        7: 16, 8: 15, 9: 15, 10: 16, 11: 15, 12: 15
+        // 全年總計：182天
+    },
+    '乙班': {
+        1: 16, 2: 14, 3: 15, 4: 15, 5: 16, 6: 15,
+        7: 15, 8: 16, 9: 15, 10: 15, 11: 15, 12: 16
+        // 全年總計：183天
+    }
+};
+
 // DOM 元素
 const form = document.getElementById('overtimeForm');
 const resultSection = document.getElementById('resultSection');
-const leaveCheckboxes = document.querySelectorAll('input[name="leaveType"]');
-const leaveDaysInput = document.getElementById('leaveDaysInput');
-
-// 監聽請假類型勾選
-leaveCheckboxes.forEach(checkbox => {
-    checkbox.addEventListener('change', () => {
-        const anyChecked = Array.from(leaveCheckboxes).some(cb => cb.checked);
-        if (anyChecked) {
-            leaveDaysInput.classList.remove('hidden');
-        } else {
-            leaveDaysInput.classList.add('hidden');
-            document.getElementById('leaveDays').value = '';
-        }
-    });
-});
 
 // 設定預設月份為當月
 window.addEventListener('DOMContentLoaded', () => {
@@ -211,7 +211,12 @@ function calculateOvertime() {
     const shift = document.getElementById('shift').value;
     const queryMonth = document.getElementById('queryMonth').value;
     const dutyHours = parseInt(document.getElementById('dutyHours').value);
-    const leaveDays = parseInt(document.getElementById('leaveDays').value) || 0;
+
+    // 取得各種請假天數
+    const rotationDays = parseInt(document.getElementById('rotationDays').value) || 0;
+    const vacationDays = parseInt(document.getElementById('vacationDays').value) || 0;
+    const compensatoryDays = parseInt(document.getElementById('compensatoryDays').value) || 0;
+    const overnightDays = parseInt(document.getElementById('overnightDays').value) || 0;
 
     // 驗證必填欄位
     if (!shift || !dutyHours || !queryMonth) {
@@ -229,29 +234,40 @@ function calculateOvertime() {
     // 計算基本工時
     const baseHours = calculateBaseHours(year, month);
     const workDaysInMonth = WORKDAYS_PER_MONTH_2026[month] || 0;
-    const daysInMonth = new Date(year, month, 0).getDate();
-    const holidayDays = daysInMonth - workDaysInMonth;
 
     const baseHoursCalculationInfo = `${year}年${month}月基本工時：${workDaysInMonth}天上班日 × 8小時 = ${baseHours}小時`;
 
-    // 計算上班天數
+    // 計算該班該月應上班天數
     const totalWorkDays = calculateWorkDays(startDate, endDate, shift);
 
-    // 扣除請假天數
-    const actualWorkDays = Math.max(0, totalWorkDays - leaveDays);
+    // 計算總請假天數
+    const totalLeaveDays = rotationDays + vacationDays + compensatoryDays + overnightDays;
 
-    // 計算總工作時數
+    // 計算實際上班天數
+    const actualWorkDays = Math.max(0, totalWorkDays - totalLeaveDays);
+
+    // 使用新的超勤時數計算公式
+    // 超勤時數 = (上班天數 - 輪休天數 - 休假天數 - 補休天數 - 外宿) * 勤務時間 + 休假天數 * 8 + 外宿 * 12 - 當月基本工時
+    const overtimeHours = Math.max(0,
+        (totalWorkDays - rotationDays - vacationDays - compensatoryDays - overnightDays) * dutyHours
+        + vacationDays * 8
+        + overnightDays * 12
+        - baseHours
+    );
+
+    // 計算總工作時數（用於顯示）
     const totalHours = actualWorkDays * dutyHours;
-
-    // 計算超勤時數（總工作時數 - 基本工時）
-    const overtimeHours = Math.max(0, totalHours - baseHours);
 
     // 顯示結果
     displayResults({
         workDays: actualWorkDays,
         totalHours: totalHours,
         overtimeHours: overtimeHours,
-        leaveDays: leaveDays,
+        leaveDays: totalLeaveDays,
+        rotationDays: rotationDays,
+        vacationDays: vacationDays,
+        compensatoryDays: compensatoryDays,
+        overnightDays: overnightDays,
         baseHours: baseHours,
         baseHoursCalculationInfo: baseHoursCalculationInfo,
         dutyHours: dutyHours,
@@ -272,25 +288,45 @@ function displayResults(data) {
     animateNumber('totalHoursResult', data.totalHours);
     animateNumber('overtimeResult', data.overtimeHours);
     animateNumber('leaveDaysResult', data.leaveDays);
+    animateNumber('monthlyOvertimeResult', data.overtimeHours);
 
     // 更新計算說明
     const details = document.getElementById('calculationDetails');
-    const leaveTypes = Array.from(document.querySelectorAll('input[name="leaveType"]:checked'))
-        .map(cb => cb.value)
-        .join('、');
-
     const dateRange = `${formatDate(data.startDate)} 至 ${formatDate(data.endDate)}`;
+
+    // 建立請假明細
+    let leaveDetails = '';
+    if (data.leaveDays > 0) {
+        const items = [];
+        if (data.rotationDays > 0) items.push(`輪休${data.rotationDays}天`);
+        if (data.vacationDays > 0) items.push(`休假${data.vacationDays}天`);
+        if (data.compensatoryDays > 0) items.push(`補休${data.compensatoryDays}天`);
+        if (data.overnightDays > 0) items.push(`外宿${data.overnightDays}天`);
+        leaveDetails = `<p><strong>請假明細：</strong>${items.join('、')} (合計 ${data.leaveDays} 天)</p>`;
+    }
+
+    // 超勤時數計算公式說明
+    const overtimeFormula = `
+        <p class="font-semibold text-purple-600 mt-2"><strong>超勤時數計算：</strong></p>
+        <p class="ml-4 text-sm">
+            (${data.totalWorkDays} - ${data.rotationDays} - ${data.vacationDays} - ${data.compensatoryDays} - ${data.overnightDays}) × ${data.dutyHours}
+            + ${data.vacationDays} × 8
+            + ${data.overnightDays} × 12
+            - ${data.baseHours}
+            = ${data.overtimeHours} 小時
+        </p>
+    `;
 
     details.innerHTML = `
         <p><strong>查詢期間：</strong>${dateRange}</p>
         <p><strong>班別：</strong>${data.shift}</p>
         <p><strong>勤務時間：</strong>每班 ${data.dutyHours} 小時</p>
         <p><strong>期間內應上班天數：</strong>${data.totalWorkDays} 天</p>
-        ${data.leaveDays > 0 ? `<p><strong>請假天數：</strong>${data.leaveDays} 天（${leaveTypes || '未指定類型'}）</p>` : ''}
+        ${leaveDetails}
         <p><strong>實際上班天數：</strong>${data.workDays} 天</p>
         <p class="text-indigo-600"><strong>基本工時計算：</strong>${data.baseHoursCalculationInfo}</p>
         <p><strong>總工作時數：</strong>${data.workDays} 天 × ${data.dutyHours} 小時/天 = ${data.totalHours} 小時</p>
-        <p class="font-semibold text-purple-600 mt-2"><strong>超勤時數：</strong>${data.totalHours} - ${data.baseHours} = ${data.overtimeHours} 小時</p>
+        ${overtimeFormula}
     `;
 
     // 顯示結果區塊
