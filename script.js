@@ -39,6 +39,7 @@ const SHIFT_WORKDAYS_2026 = {
 
 // 各號碼對應的時薪
 const HOURLY_RATE = {
+    '121號': 343,
     '1號': 324,
     '2號': 328,
     '3號': 298,
@@ -49,7 +50,7 @@ const HOURLY_RATE = {
     '8號': 244,
     '9號': 249,
     '10號': 278,
-    '11號': 269,
+    '11號': 282,
     '12號': 249,
     '13號': 282,
     '14號': 205,
@@ -61,7 +62,7 @@ const HOURLY_RATE = {
     '20號': 208,
     '21號': 308,
     '22號': 254,
-    '23號': 250,
+    '23號': 263,
     '24號': 249,
     '25號': 308,
     '26號': 308,
@@ -279,11 +280,12 @@ function calculateOvertime() {
     const actualWorkDays = Math.max(0, totalWorkDays - totalLeaveDays);
 
     // 使用新的超勤時數計算公式
-    // 超勤時數 = (上班天數 - 輪休天數 - 休假天數 - 補休天數 - 外宿) * 勤務時間 + 休假天數 * 8 + 外宿 * 12 - 當月基本工時
+    // 超勤時數 = (上班天數 - 輪休天數 - 休假天數 - 補休天數 - 外宿) * 勤務時間 + 休假天數 * 8 + 外宿 * 12 + 補休天數 * 12 - 當月基本工時
     const overtimeHours = Math.max(0,
         (totalWorkDays - rotationDays - vacationDays - compensatoryDays - overnightDays) * dutyHours
         + vacationDays * 8
         + overnightDays * 12
+        + compensatoryDays * 12
         - baseHours
     );
 
@@ -366,6 +368,7 @@ function displayResults(data) {
             (${data.totalWorkDays} - ${data.rotationDays} - ${data.vacationDays} - ${data.compensatoryDays} - ${data.overnightDays}) × ${data.dutyHours}
             + ${data.vacationDays} × 8
             + ${data.overnightDays} × 12
+            + ${data.compensatoryDays} × 12
             - ${data.baseHours}
             = ${data.overtimeHours} 小時
         </p>
